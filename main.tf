@@ -7,6 +7,17 @@ terraform {
   }
 }
 
+locals{
+  custom_origin_config_defaults = {
+    custom_origin_config = {
+      http_port = 80
+      https_port = 443
+      origin_protocol_policy = "match-viewer"#"http-only"  
+      origin_ssl_protocols = ["TLSv1.2"]
+    }
+  }
+}
+
 module "cloudfront" {
   source = "terraform-aws-modules/cloudfront/aws"
 
@@ -58,7 +69,7 @@ module "cloudfront" {
       # default_ttl            = 3600
       # max_ttl                = 86400
       compress               = true
-      viewer_protocol_policy = "redirect-to-https" 
+      viewer_protocol_policy = lookup(bV,"viewer_protocol_policy","redirect-to-https")
       use_forwarded_values   = false
 
     }
@@ -76,32 +87,14 @@ module "cloudfront" {
           }
         },
         vpcoV)
-      }
+      } 
 
 
   origin = merge({
-      for oK,oV in var.origins: oK => {
-        domain_name = oV.domain_name
-        origin_id   = oK
-        #origin_path = "/"
-        custom_origin_config = {
-          http_port = 80
-          https_port = 443
-          origin_protocol_policy = "match-viewer"#"http-only"  
-          origin_ssl_protocols = ["TLSv1.2"]
-        }
-      } 
+      for oK,oV in var.origins: oK => merge( { "origin_id" = oK }, oV ) if length(keys(lookup(oV, "vpc_origin_config", {}))) > 0
     },{
-      for oK,oV in var.vpc_origin: oK => {
-        domain_name = oV.domain_name
-        origin_id   = oK
-        #origin_path = "/"
-        vpc_origin_config = {
-          vpc_origin = oK
-        }
-      }
-    }
-  )
+      for oK,oV in var.origins: oK => merge( local.custom_origin_config_defaults, { "origin_id" = oK }, oV) if lookup(oV,"vpc_origin_config",false) == false
+    })
 
   viewer_certificate = {
     acm_certificate_arn = var.certificate_arn
