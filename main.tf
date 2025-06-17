@@ -41,7 +41,7 @@ module "cloudfront" {
   default_cache_behavior = {
     target_origin_id       = var.default_origin_id
     viewer_protocol_policy = "redirect-to-https"
-    allowed_methods  = ["GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH"]
+    allowed_methods  = var.allowed_methods
     cached_methods   = ["GET", "HEAD", "OPTIONS"]
     
     cache_policy_id            = var.cache_policies[var.default_cache_policy]
@@ -60,7 +60,7 @@ module "cloudfront" {
     for bK,bV in var.cache_behaviors: {
       path_pattern     = bV.path
       compress = true
-      allowed_methods  = lookup(bV,"allowed_methods",["GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH"])
+      allowed_methods  = lookup(bV,"allowed_methods",var.allowed_methods)
       cached_methods   = lookup(bV,"cached_methods",["GET", "HEAD", "OPTIONS"])
       target_origin_id = lookup(bV,"origin",var.default_origin_id)
 

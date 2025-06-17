@@ -24,3 +24,5 @@ variable "vpc_origin" { default = {} }
 variable "default_origin_id" {}
 
 variable "web_acl_id" { default = null }
+
+variable "allowed_methods" { default = ["GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH"] }
