@@ -4,6 +4,7 @@ variable "origins" { default = {} }
 
 variable "default_request_policy" { default = "UserAgentRefererHeaders" }
 variable "default_cache_policy"   { default = "CachingDisabled" }
+variable "default_function_association" { default = null}
 
 variable "cache_behaviors" {}
 

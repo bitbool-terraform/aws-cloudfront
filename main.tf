@@ -52,6 +52,8 @@ module "cloudfront" {
     # max_ttl                = 86400
     compress               = true
     use_forwarded_values   = false
+
+    function_association = var.default_function_association
   }
   
   ordered_cache_behavior = [ 
