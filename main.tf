@@ -26,7 +26,7 @@ module "cloudfront" {
 
   web_acl_id = var.web_acl_id
 
-  tags = {"Name" = var.cloudfront_name}
+  tags = {"Name" = var.cloudfront_name, "CF_DISTRIBUTION" = var.cloudfront_name }
 
   enabled = true
   http_version        = "http2and3"
