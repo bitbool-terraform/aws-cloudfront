@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.0.0"
+      version = ">= 6.0.0"
     }
   }
 }
@@ -20,13 +20,14 @@ locals{
 
 module "cloudfront" {
   source = "terraform-aws-modules/cloudfront/aws"
+  version = "5.0.0"
 
   aliases = var.aliases
   comment = var.cloudfront_name
 
   web_acl_id = var.web_acl_id
 
-  tags = {"Name" = var.cloudfront_name, "CF_DISTRIBUTION" = var.cloudfront_name }
+  tags = {"Name" = var.cloudfront_name, "CF_DISTRIBUTION" = var.cloudfront_name, "TFModule" = "bitbool/aws-cloudfront" }
 
   enabled = true
   http_version        = "http2and3"
@@ -104,10 +105,18 @@ module "cloudfront" {
     minimum_protocol_version = "TLSv1.2_2021"
   }
 
-  # logging_config = {
-  #   bucket = module.log_bucket.s3_bucket_bucket_domain_name
-  #   prefix = "cloudfront"
+  # dynamic "logging_config" {
+  #   for_each = var.enable_s3_logging ? { run = true } : {}
+  #   content {
+  #     bucket = module.log_bucket.s3_bucket_bucket_domain_name
+  #     prefix = "cloudfront"
+  #   }
   # }
+  # logging_config = var.enable_s3_logging ? {
+  #   bucket = try(module.log_bucket[0].s3_bucket_bucket_domain_name,null)
+  #   prefix = "cloudfront"
+  # } : {}
+
 
 }
 
@@ -115,25 +124,103 @@ module "cloudfront" {
 data "aws_cloudfront_log_delivery_canonical_user_id" "cloudfront" {}
 data "aws_canonical_user_id" "current" {}
 
-# module "log_bucket" {
-#   source  = "terraform-aws-modules/s3-bucket/aws"
-#   version = "~> 4.0"
+module "log_bucket" {
+  count = var.enable_s3_logging ? 1 : 0
 
-#   bucket = format("aws-cloudfront-logs-%s",var.cloudfront_name)
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "5.7.0"
 
-#   control_object_ownership = true
-#   object_ownership         = "ObjectWriter"
+  region = "us-east-1"
 
-#   grant = [{
-#     type       = "CanonicalUser"
-#     permission = "FULL_CONTROL"
-#     id         = data.aws_canonical_user_id.current.id
-#     }, {
-#     type       = "CanonicalUser"
-#     permission = "FULL_CONTROL"
-#     id         = data.aws_cloudfront_log_delivery_canonical_user_id.cloudfront.id
-#     # Ref. https://github.com/terraform-providers/terraform-provider-aws/issues/12512
-#     # Ref. https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
-#   }]
-#   force_destroy = false
-# }
+  bucket = format("aws-cloudfront-logs-%s",var.cloudfront_name)
+
+  control_object_ownership = true
+  object_ownership         = "ObjectWriter"
+
+  grant = [{
+    type       = "CanonicalUser"
+    permission = "FULL_CONTROL"
+    id         = data.aws_canonical_user_id.current.id
+    }, {
+    type       = "CanonicalUser"
+    permission = "FULL_CONTROL"
+    id         = data.aws_cloudfront_log_delivery_canonical_user_id.cloudfront.id
+    # Ref. https://github.com/terraform-providers/terraform-provider-aws/issues/12512
+    # Ref. https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html
+  }]
+  force_destroy = false
+
+  tags = {
+    "TFModule" = "bitbool/aws-cloudfront"
+  }  
+}
+
+
+resource "aws_cloudwatch_log_delivery_source" "cloudfront" {
+  region = "us-east-1"
+
+  name         = format("aws-cloudfront-logs-%s-src",var.cloudfront_name)
+  log_type     = "ACCESS_LOGS"
+  resource_arn = module.cloudfront.cloudfront_distribution_arn
+}
+
+
+resource "aws_cloudwatch_log_delivery_destination" "cloudfront" {
+  region = "us-east-1"
+
+  name          = format("aws-cloudfront-logs-%s-dst",var.cloudfront_name)
+  output_format = "parquet"
+
+  delivery_destination_configuration {
+    destination_resource_arn = "${module.log_bucket[0].s3_bucket_arn}/cloudfrontv2"
+  }
+}
+
+resource "aws_cloudwatch_log_delivery" "cloudfront" {
+  region = "us-east-1"
+
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.cloudfront.name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.cloudfront.arn
+
+  record_fields = [
+    "date",
+    "time",
+    "x-edge-location",
+    "sc-bytes",
+    "c-ip",
+    "cs-method",
+    "cs(Host)",
+    "cs-uri-stem",
+    "sc-status",
+    "cs(Referer)",
+    "cs(User-Agent)",
+    "cs-uri-query",
+    "cs(Cookie)",
+    "x-edge-result-type",
+    "x-edge-request-id",
+    "x-host-header",
+    "cs-protocol",
+    "cs-bytes",
+    "time-taken",
+    "x-forwarded-for",
+    "ssl-protocol",
+    "ssl-cipher",
+    "x-edge-response-result-type",
+    "cs-protocol-version",
+    "fle-status",
+    "fle-encrypted-fields",
+    "c-port",
+    "time-to-first-byte",
+    "x-edge-detailed-result-type",
+    "sc-content-type",
+    "sc-content-len",
+    "sc-range-start",
+    "sc-range-end",
+    "c-country"
+  ]
+
+  s3_delivery_configuration {
+    enable_hive_compatible_path = true
+    #suffix_path = format("/%s/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}",var.cloudfront_name)
+  }
+}

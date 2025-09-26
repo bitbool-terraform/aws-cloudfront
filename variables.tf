@@ -26,3 +26,5 @@ variable "default_origin_id" {}
 variable "web_acl_id" { default = null }
 
 variable "allowed_methods" { default = ["GET", "HEAD", "POST", "PUT", "OPTIONS", "DELETE", "PATCH"] }
+
+variable "enable_s3_logging" { default = true }
