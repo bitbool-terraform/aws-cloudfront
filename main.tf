@@ -20,6 +20,7 @@ locals{
 
 module "cloudfront" {
   source = "terraform-aws-modules/cloudfront/aws"
+  version = "4.2.0"
 
   aliases = var.aliases
   comment = var.cloudfront_name
