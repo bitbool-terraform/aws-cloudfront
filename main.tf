@@ -55,6 +55,7 @@ module "cloudfront" {
     use_forwarded_values   = false
 
     function_association = var.default_function_association
+    lambda_function_association = var.default_lambda_function_association
   }
   
   ordered_cache_behavior = [ 
@@ -74,6 +75,8 @@ module "cloudfront" {
       compress               = true
       viewer_protocol_policy = lookup(bV,"viewer_protocol_policy","redirect-to-https")
       use_forwarded_values   = false
+
+      lambda_function_association = lookup(bV,"lambda_function_association",var.ordered_behaviors_inherit_default_lambda_function_association ? var.default_lambda_function_association : {})
 
     }
   ]

@@ -5,6 +5,8 @@ variable "origins" { default = {} }
 variable "default_request_policy" { default = "UserAgentRefererHeaders" }
 variable "default_cache_policy"   { default = "CachingDisabled" }
 variable "default_function_association" { default = {} }
+variable "default_lambda_function_association" { default = {} }
+variable "ordered_behaviors_inherit_default_lambda_function_association" { default = false }
 
 variable "cache_behaviors" {}
 
