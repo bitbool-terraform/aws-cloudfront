@@ -73,7 +73,7 @@ module "cloudfront" {
       # default_ttl            = 3600
       # max_ttl                = 86400
       compress               = true
-      viewer_protocol_policy = lookup(bV,"viewer_protocol_policy","redirect-to-https")
+      viewer_protocol_policy = lookup(bV,"viewer_protocol_policy",var.default_viewer_protocol_policy)
       use_forwarded_values   = false
 
       lambda_function_association = lookup(bV,"lambda_function_association",var.ordered_behaviors_inherit_default_lambda_function_association ? var.default_lambda_function_association : {})
