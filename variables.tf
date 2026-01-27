@@ -7,6 +7,7 @@ variable "default_cache_policy"   { default = "CachingDisabled" }
 variable "default_function_association" { default = {} }
 variable "default_lambda_function_association" { default = {} }
 variable "ordered_behaviors_inherit_default_lambda_function_association" { default = false }
+variable "default_viewer_protocol_policy" { default = "redirect-to-https" }
 
 variable "cache_behaviors" {}
 

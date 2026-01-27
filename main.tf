@@ -41,7 +41,7 @@ module "cloudfront" {
 
   default_cache_behavior = {
     target_origin_id       = var.default_origin_id
-    viewer_protocol_policy = "redirect-to-https"
+    viewer_protocol_policy = var.default_viewer_protocol_policy
     allowed_methods  = var.allowed_methods
     cached_methods   = ["GET", "HEAD", "OPTIONS"]
     
