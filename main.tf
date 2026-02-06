@@ -12,7 +12,7 @@ locals{
     custom_origin_config = {
       http_port = 80
       https_port = 443
-      origin_protocol_policy = "match-viewer"#"http-only"  
+      origin_protocol_policy = var.default_origin_protocol_policy #"match-viewer"#"http-only"  
       origin_ssl_protocols = ["TLSv1.2"]
     }
   }
@@ -86,7 +86,7 @@ module "cloudfront" {
         {
           http_port              = 80
           https_port             = 443
-          origin_protocol_policy = "https-only"
+          origin_protocol_policy = lookup(vpcoV,"origin_protocol_policy",var.default_origin_protocol_policy) #"https-only"
           origin_ssl_protocols = {
             items    = ["TLSv1.2"]
             quantity = 1

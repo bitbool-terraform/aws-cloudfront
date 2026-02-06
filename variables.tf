@@ -8,6 +8,7 @@ variable "default_function_association" { default = {} }
 variable "default_lambda_function_association" { default = {} }
 variable "ordered_behaviors_inherit_default_lambda_function_association" { default = false }
 variable "default_viewer_protocol_policy" { default = "redirect-to-https" }
+variable "default_origin_protocol_policy" { default = "match-viewer" }
 
 variable "cache_behaviors" {}
 
