@@ -224,6 +224,7 @@ resource "aws_cloudwatch_log_delivery" "cloudfront" {
 
   s3_delivery_configuration {
     enable_hive_compatible_path = true
+    suffix_path = ""
     #suffix_path = format("/%s/{DistributionId}/{yyyy}/{MM}/{dd}/{HH}",var.cloudfront_name)
   }
 }
